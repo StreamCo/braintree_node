@@ -6,9 +6,17 @@ braintree = require('../braintree')
 xml2js = require('xml2js')
 exceptions = require('./exceptions')
 {Util} = require('./util')
+forever = require('forever-agent')
+
+foreverOpts = {
+  minSocket: 30
+  maxSockets: 60
+}
 
 class Http
   timeout: 60000
+  httpsAgent: new forever.SSL(foreverOpts)
+  httpAgent: new forever(foreverOpts)
 
   constructor: (@config) ->
     @parser = new xml2js.Parser
@@ -53,6 +61,8 @@ class Http
         'User-Agent': 'Braintree Node ' + braintree.version
       }
     }
+
+    options.agent = if @config.environment.ssl then @httpsAgent else @httpAgent
 
     if body
       requestBody = JSON.stringify(Util.convertObjectKeysToUnderscores(body))
